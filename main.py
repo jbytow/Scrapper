@@ -1,6 +1,7 @@
 import pandas as pd
 import requests
 import re
+import time
 from bs4 import BeautifulSoup
 
 
@@ -8,8 +9,20 @@ headers = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'
 }
 
-urls = ['https://glycemic-index.net/baguette-white/',
-        'https://glycemic-index.net/chocolate-bar-with-sugar/']
+main_url = 'https://glycemic-index.net/glycemic-index-chart/'
+page_main = requests.get(main_url, headers=headers)
+soup_main = BeautifulSoup(page_main.content, 'html.parser')
+
+table = soup_main.find('table', class_='tftable')
+
+product_urls = []
+
+for row in table.find_all('tr'):
+    link = row.find('a')
+    if link:
+        product_urls.append(link['href'])
+
+print(product_urls)
 
 product_list = []
 kcal_list = []
@@ -17,9 +30,10 @@ proteins_list = []
 carbohydrates_list = []
 fats_list = []
 
-for url in urls:
+for url in product_urls:
     page = requests.get(url, headers=headers)
     soup = BeautifulSoup(page.content, "html.parser")
+    time.sleep(2)
 
     product = soup.find('h1', class_='entry-title').text.strip()
 
@@ -48,18 +62,3 @@ df = pd.DataFrame({'Product': product_list,
 
 df.to_csv('nutrition.csv', index=False, sep='\t')
 
-# print(product)
-# print("kcal:", kcal)
-# print("proteins:", proteins)
-# print("carbohydrates:", carbohydrates)
-# print("fats:", fats)
-
-# calories = re.findall(r'Calories \(kcal\)(\d+)', text)
-# proteins = re.findall(r'Proteins \(g\)(\d+.\d+)', text)
-# carbohydrates = re.findall(r'Carbohydrates \(g\)(\d+.\d+)', text)
-# fats = re.findall(r'Fats \(g\)(\d+.\d+)', text)
-#
-# print("Calories:", calories[0])
-# print("Proteins:", proteins[0])
-# print("Carbohydrates:", carbohydrates[0])
-# print("Fats:", fats[0])
