@@ -2,6 +2,7 @@ import pandas as pd
 import requests
 import re
 import time
+import csv
 from bs4 import BeautifulSoup
 
 
@@ -29,6 +30,8 @@ kcal_list = []
 proteins_list = []
 carbohydrates_list = []
 fats_list = []
+gi_list = []
+gl_list = []
 
 for url in product_urls:
     page = requests.get(url, headers=headers)
@@ -43,22 +46,53 @@ for url in product_urls:
 
     text = nutrition.get_text()
 
-    kcal = re.search(r"(\d+)\s*kcal", text).group(1)
-    proteins = re.search(r"(\d+\.\d+)\s*grams?\s+of\s+proteins", text).group(1)
-    carbohydrates = re.search(r"(\d+\.\d+)\s*grams?\s+of\s+carbohydrates", text).group(1)
-    fats = re.search(r"(\d+\.\d+)\s*grams?\s+of\s+fats", text).group(1)
+    # search for kcal
+    match_kcal = re.search(r"(\d+)\s*kcal", text)
+    kcal = match_kcal.group(1) if match_kcal else None
+
+    # search for proteins
+    match_proteins = re.search(r"(\d+\.\d+)\s*grams?\s+of\s+proteins", text)
+    proteins = match_proteins.group(1) if match_proteins else None
+
+    # search for carbohydrates
+    match_carbohydrates = re.search(r"(\d+\.\d+)\s*grams?\s+of\s+carbohydrates", text)
+    carbohydrates = match_carbohydrates.group(1) if match_carbohydrates else None
+
+    # search for fats
+    match_fats = re.search(r"(\d+\.\d+)\s*grams?\s+of\s+fats", text)
+    fats = match_fats.group(1) if match_fats else None
+
+    # search for GI
+    match_gi = re.search(r"GI.*?(\d+)", text)
+    gi = match_gi.group(1) if match_gi else None
+
+    # search for GL
+    match_gl = re.search(r"GL.*?(\d+\.\d+)", text)
+    gl = match_gl.group(1) if match_gl else None
+
+    # kcal = re.search(r"(\d+)\s*kcal", text).group(1)
+    # proteins = re.search(r"(\d+\.\d+)\s*grams?\s+of\s+proteins", text).group(1)
+    # carbohydrates = re.search(r"(\d+\.\d+)\s*grams?\s+of\s+carbohydrates", text).group(1)
+    # fats = re.search(r"(\d+\.\d+)\s*grams?\s+of\s+fats", text).group(1)
+    # gi = re.search(r"GI.*?(\d+)", text).group(1)
+    # gl = re.search(r"GL.*?(\d+\.\d+)", text).group(1)
 
     product_list.append(product)
     kcal_list.append(kcal)
     proteins_list.append(proteins)
     carbohydrates_list.append(carbohydrates)
     fats_list.append(fats)
+    gi_list.append(gi)
+    gl_list.append(gl)
 
+print(product_list)
 df = pd.DataFrame({'Product': product_list,
                    'kcal': kcal_list,
                    'proteins': proteins_list,
                    'carbohydrates': carbohydrates_list,
-                   'fats': fats_list})
+                   'fats': fats_list,
+                   'gi': gi_list,
+                   'gl': gl_list})
 
-df.to_csv('nutrition.csv', index=False, sep='\t')
-
+df.to_csv('output/nutrition.csv', index=False, sep=';', quoting=csv.QUOTE_ALL)
+df.to_excel('output/nutrition.xlsx', index=False)
